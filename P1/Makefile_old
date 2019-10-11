@@ -31,25 +31,10 @@ dump:
 	@$(PG_DUMP) > $(DBNAME).sql
 restore:
 	@echo restore data base
-	@cat $(DBNAME).sql | $(PSQL)
+	@cat $(DBNAME).sql | $(PSQL)  
 shell:
 	@echo create psql shell
-	@$(PSQL)
-
-newdatabase:
-	@echo Eliminando BBDD
-	@$(DROPDB) $(DBNAME)
-	rm -f *.log
-
-	@echo Creando BBDD
-	@$(CREATEDB)
-
-	@echo restore data base
-	@cat $(DBNAME).sql | $(PSQL)
-
-	@echo adding information to newdatabase
-	@cat newdatabase.sql | $(PSQL)
-
+	@$(PSQL)  
 
 query1:
 	@echo query-1: "customer who has rented more movies"
@@ -69,3 +54,4 @@ query5:
 query6:
 	@echo query6: "categoria favorita del cliente que alquila más  peliculas"
 	@cat query6.sql | $(PSQL) | tee query6.log
+
