@@ -20,7 +20,7 @@ int main(void) {
     /* Allocate a connection handle */
     SQLAllocHandle(SQL_HANDLE_DBC, env, &dbc);
     /* Connect to the DSN mydsn */
-    ret = SQLDriverConnect(dbc, NULL, (SQLCHAR*) "DRIVER=PostgreSQL;DATABASE=test01;SERVER=localhost;PORT=5432;UID=postgres;PWD=;", SQL_NTS,
+    ret = SQLDriverConnect(dbc, NULL, (SQLCHAR*) "DRIVER=PostgreSQL;DATABASE=test01;SERVER=localhost;PORT=5432;UID=lauradepaz;PWD=;", SQL_NTS,
                            outstr, sizeof(outstr), &outstrlen,
                            SQL_DRIVER_NOPROMPT);
 
