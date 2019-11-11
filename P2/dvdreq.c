@@ -7,16 +7,33 @@
 
 
 int customer(SQLHDBC dbc, char* fname, char* lname);
-int film(SQLHDBC dbc, char* title){
-  return 0;
-}
-int rent(SQLHDBC dbc, int customer_id, char* init_date, char* end_date){
-  return 0;
-}
-int recommend(SQLHDBC dbc, int customer_id){
-  return 0;
-}
+int film(SQLHDBC dbc, char* title);
+int rent(SQLHDBC dbc, int customer_id, char* init_date, char* end_date);
+int recommend(SQLHDBC dbc, int customer_id);
 
+int test(SQLHDBC dbc){
+  SQLHSTMT stmt;
+  SQLRETURN ret; /* ODBC API return status */
+  char query[1000];
+  int film;
+
+  sprintf(query, "SELECT film_id FROM film");
+
+  /* Allocate a statement handle */
+  SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
+
+  /* simple query */
+  SQLExecDirect(stmt, (SQLCHAR*) query, SQL_NTS);
+  /* How many columns are there */
+
+  /* Loop through the rows in the result-set */
+  while (SQL_SUCCEEDED(ret = SQLFetch(stmt))) {
+      ret = SQLGetData(stmt, 1, SQL_C_SLONG, &film, sizeof(film), NULL);
+      
+      printf("%d\n", film);
+  }
+  return 1;	
+}
 
 int main(int argc, char** argv) {
     SQLHENV env;
@@ -143,7 +160,50 @@ int customer(SQLHDBC dbc, char* fname, char* lname) {
       ret = SQLGetData(stmt, 6, SQL_C_CHAR, district, sizeof(district), NULL);
       ret = SQLGetData(stmt, 7, SQL_C_CHAR, city, sizeof(city), NULL);
       ret = SQLGetData(stmt, 8, SQL_C_SLONG, &postal_code, sizeof(postal_code), NULL);
-      printf("%d\t%s\t%s\t%s\t%s\t%s\t%s\t%d\n", customer_id, customer_first_name,customer_last_name, registration_date, address, district, city,postal_code);
+      printf("%3d\t%5s\t%5s\t%8s\t%12s\t%8s\t%8s\t%5d\n", customer_id, customer_first_name,customer_last_name, registration_date, address, district, city,postal_code);
   }
   return 1;
 }
+
+int film(SQLHDBC dbc, char* title){
+  return 0;
+}
+int rent(SQLHDBC dbc, int customer_id, char* init_date, char* end_date){
+  return 0;
+}
+
+int recommend(SQLHDBC dbc, int customer_id){
+  SQLHSTMT stmt;
+  SQLRETURN ret;
+  int category_id;
+  char category_name[512];
+  char query_fav_cat[1000];
+  int film_id;
+  char title[512];
+  int times_rented;
+  char query[1000];
+
+  sprintf(query_fav_cat, "SELECT category.category_id, category.name FROM rental, inventory, film, film_category, category WHERE  rental.inventory_id = inventory.inventory_id AND inventory.film_id = film.film_id AND film.film_id = film_category.film_id AND film_category.category_id = category.category_id AND rental.customer_id = %d GROUP  BY category.category_id ORDER  BY Count(*) DESC LIMIT  1;", customer_id);
+
+  SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
+  SQLExecDirect(stmt, (SQLCHAR*) query_fav_cat, SQL_NTS);
+	
+  ret = SQLFetch(stmt);
+  ret = SQLGetData(stmt, 1, SQL_C_SLONG, &category_id, sizeof(category_id), NULL);
+  ret = SQLGetData(stmt, 2, SQL_C_CHAR, category_name, sizeof(category_name), NULL);
+
+
+  sprintf(query, "SELECT f.film_id, title FROM film, (SELECT film.film_id, Count(*) AS times_rented FROM rental, inventory, film, film_category WHERE rental.inventory_id = inventory.inventory_id AND inventory.film_id = film.film_id AND film.film_id = film_category.film_id AND category_id = %d GROUP  BY film.film_id) AS f WHERE  f.film_id NOT IN (SELECT film.film_id FROM film, rental, inventory, film_category WHERE  rental.customer_id = %d AND rental.inventory_id = inventory.inventory_id AND inventory.film_id = film.film_id AND film.film_id = film_category.film_id AND category_id = %d) AND f.film_id = film.film_id ORDER  BY times_rented DESC LIMIT  3;", category_id, customer_id, category_id);
+
+  SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
+  SQLExecDirect(stmt, (SQLCHAR*) query, SQL_NTS);
+
+  while (SQL_SUCCEEDED(ret = SQLFetch(stmt))) {
+      ret = SQLGetData(stmt, 1, SQL_C_SLONG, &film_id, sizeof(film_id), NULL);
+      ret = SQLGetData(stmt, 2, SQL_C_CHAR, title, sizeof(title), NULL);
+      printf("%4d\t%20s\t%10s\n", film_id, title,category_name);
+  }
+  
+  return 1;
+}
+
