@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
 
     /* Chek number of arguments */
     if (argc < 2){
-      fprintf(stderr, "Error in the input parameters\n");
+      fprintf(stderr, "Error in the input parameters: too few arguments\n");
       exit(1);
     }
 
@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     if (strcmp(argv[1], "new") == 0){
       /* Check number of input parameters */
       if (argc != 7){
-        fprintf(stderr, "Error in the input parameters\n");
+        fprintf(stderr, "Error in the input parameters: dvdrent new <customer_id> <film_id> <staff_id> <store_id> <amount>\n");
         exit(1);
       }
 
@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
 
     else if (strcmp(argv[1], "remove") == 0){
       if (argc != 3){
-        fprintf(stderr, "Error in the input parameters\n");
+        fprintf(stderr, "Error in the input parameters: dvdrent remove <rent_id>\n");
         exit(1);
       }
 
@@ -106,11 +106,11 @@ int check_film(SQLHDBC dbc, int film_id){
   }
 }
 
-int check_staff(SQLHDBC dbc, int staff_id){
+int check_staff_store(SQLHDBC dbc, int staff_id, int store_id){
   SQLHSTMT stmt;
   char query[1000];
 
-  sprintf (query, "SELECT staff_id FROM staff WHERE staff_id = %d", staff_id);
+  sprintf (query, "SELECT * FROM staff WHERE staff_id = %d AND store_id = %d", staff_id, store_id);
   SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
   SQLExecDirect(stmt, (SQLCHAR*) query, SQL_NTS);
 
@@ -124,23 +124,6 @@ int check_staff(SQLHDBC dbc, int staff_id){
   }
 }
 
-int check_store(SQLHDBC dbc, int store_id){
-  SQLHSTMT stmt;
-  char query[1000];
-
-  sprintf (query, "SELECT store_id FROM store WHERE store_id = %d", store_id);
-  SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
-  SQLExecDirect(stmt, (SQLCHAR*) query, SQL_NTS);
-
-  if (SQL_SUCCEEDED(SQLFetch(stmt))) {
-    SQLFreeHandle(SQL_HANDLE_STMT, stmt);
-    return 1;
-  }
-  else {
-    SQLFreeHandle(SQL_HANDLE_STMT, stmt);
-    return 0;
-  }
-}
 
 
 int new(SQLHDBC dbc, int customer_id, int film_id, int staff_id, int store_id, double amount){
@@ -167,20 +150,21 @@ int new(SQLHDBC dbc, int customer_id, int film_id, int staff_id, int store_id, d
     fprintf(stderr, "Film_id %d does not exist\n", film_id);
     return(0);
   }
-  if (check_store(dbc, store_id) == 0){
-    fprintf(stderr, "Store_id %d does not exist\n", store_id);
+  if (check_staff_store(dbc, staff_id, store_id) == 0){
+    fprintf(stderr, "Staff %d does not work in store %d\n", staff_id, store_id);
     return(0);
   }
-  if (check_staff(dbc, staff_id) == 0){
-    fprintf(stderr, "Staff_id %d does not exist\n", staff_id);
-    return(0);
-  }
+
 
   /* Find unrented dvd from inventory */
   sprintf(query_dvd, "SELECT DISTINCT inventory.inventory_id FROM inventory, rental WHERE inventory.film_id = %d AND inventory.inventory_id NOT IN (SELECT inventory.inventory_id FROM inventory, rental WHERE inventory.film_id = %d AND inventory.inventory_id = rental.inventory_id AND rental.return_date IS NULL) ORDER BY inventory.inventory_id LIMIT 1;", film_id, film_id);
   SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
   SQLExecDirect(stmt, (SQLCHAR*) query_dvd, SQL_NTS);
 
+  if (!SQL_SUCCEEDED(SQLFetch(stmt))){
+    printf("There are no available dvd of film %d\n", film_id);
+    return 0;
+  }
   while (SQL_SUCCEEDED(ret = SQLFetch(stmt))){
     ret = SQLGetData(stmt, 1, SQL_C_SLONG, &unrented_dvd, sizeof(unrented_dvd), NULL);
   }

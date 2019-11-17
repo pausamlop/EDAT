@@ -133,6 +133,7 @@ int customer(SQLHDBC dbc, char* fname, char* lname) {
   /* How many columns are there */
 
   /* Loop through the rows in the result-set */
+  printf("%10s %10s %10s %20s %20s %13s %10s %15s\n","customer_id","first_name","last_name","registration_date","address","district","city","postal_code");
   while (SQL_SUCCEEDED(ret = SQLFetch(stmt))) {
       ret = SQLGetData(stmt, 1, SQL_C_SLONG, &customer_id, sizeof(customer_id), NULL);
       ret = SQLGetData(stmt, 2, SQL_C_CHAR, customer_first_name, sizeof(customer_first_name), NULL);
@@ -142,7 +143,7 @@ int customer(SQLHDBC dbc, char* fname, char* lname) {
       ret = SQLGetData(stmt, 6, SQL_C_CHAR, district, sizeof(district), NULL);
       ret = SQLGetData(stmt, 7, SQL_C_CHAR, city, sizeof(city), NULL);
       ret = SQLGetData(stmt, 8, SQL_C_SLONG, &postal_code, sizeof(postal_code), NULL);
-      printf("%3d\t%5s\t%5s\t%8s\t%12s\t%8s\t%8s\t%5d\n", customer_id, customer_first_name,customer_last_name, registration_date, address, district, city,postal_code);
+      printf(" %10d %10s %10s %20s %20s %13s %10s %15d\n", customer_id, customer_first_name,customer_last_name, registration_date, address, district, city,postal_code);
   }
 
   SQLFreeHandle(SQL_HANDLE_STMT, stmt);
@@ -166,6 +167,7 @@ int film_actors(SQLHDBC dbc, int film_id){
     ret = SQLGetData(stmt, 2, SQL_C_CHAR, lname, sizeof(lname), NULL);
     printf("   - %s %s\n", fname, lname);
   }
+  printf("\n");
 
   SQLFreeHandle(SQL_HANDLE_STMT, stmt);
 
@@ -187,6 +189,8 @@ int film(SQLHDBC dbc, char* title){
   sprintf(query, "SELECT film.film_id, film.title, film.release_year, film.length, language.NAME AS language_name, film.description FROM film, language WHERE  film.title LIKE '%c%s%c' AND film.language_id = language.language_id;",'%', title, '%');
   SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
   SQLExecDirect(stmt, (SQLCHAR*) query, SQL_NTS);
+
+
   while (SQL_SUCCEEDED(ret = SQLFetch(stmt))){
     ret = SQLGetData(stmt, 1, SQL_C_SLONG, &film_id, sizeof(film_id), NULL);
     ret = SQLGetData(stmt, 2, SQL_C_CHAR, film_title, sizeof(film_title), NULL);
@@ -194,7 +198,8 @@ int film(SQLHDBC dbc, char* title){
     ret = SQLGetData(stmt, 4, SQL_C_SLONG, &lenght, sizeof(lenght), NULL);
     ret = SQLGetData(stmt, 5, SQL_C_CHAR, language, sizeof(language), NULL);
     ret = SQLGetData(stmt, 6, SQL_C_CHAR, description, sizeof(description), NULL);
-    printf("%d\t%20s\t%s\t%d\t%s\t%1s\n", film_id, film_title, release_year, lenght, language, description);
+    printf("%10s %20s %15s %10s %12s\t%s\n", "film_id", "title", "release_year", "lenght", "language", "description");
+    printf("%10d %20s %15s %10d %12s\t%s\n", film_id, film_title, release_year, lenght, language, description);
     film_actors(dbc, film_id);
   }
 
@@ -270,10 +275,11 @@ int recommend(SQLHDBC dbc, int customer_id){
   SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
   SQLExecDirect(stmt, (SQLCHAR*) query, SQL_NTS);
 
+  printf("%10s %20s %20s\n", "film_id", "title", "category");
   while (SQL_SUCCEEDED(ret = SQLFetch(stmt))) {
       ret = SQLGetData(stmt, 1, SQL_C_SLONG, &film_id, sizeof(film_id), NULL);
       ret = SQLGetData(stmt, 2, SQL_C_CHAR, title, sizeof(title), NULL);
-      printf("%4d\t%20s\t%10s\n", film_id, title,category_name);
+      printf("%10d %20s %20s\n", film_id, title,category_name);
   }
 
   SQLFreeHandle(SQL_HANDLE_STMT, stmt);
