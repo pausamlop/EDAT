@@ -161,13 +161,11 @@ int new(SQLHDBC dbc, int customer_id, int film_id, int staff_id, int store_id, d
   SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
   SQLExecDirect(stmt, (SQLCHAR*) query_dvd, SQL_NTS);
 
-  if (!SQL_SUCCEEDED(SQLFetch(stmt))){
+  if (!SQL_SUCCEEDED(ret = SQLFetch(stmt))){
     printf("There are no available dvd of film %d\n", film_id);
     return 0;
   }
-  while (SQL_SUCCEEDED(ret = SQLFetch(stmt))){
-    ret = SQLGetData(stmt, 1, SQL_C_SLONG, &unrented_dvd, sizeof(unrented_dvd), NULL);
-  }
+  ret = SQLGetData(stmt, 1, SQL_C_SLONG, &unrented_dvd, sizeof(unrented_dvd), NULL);
   printf("unrented_dvd = %d\n", unrented_dvd);
   SQLFreeHandle(SQL_HANDLE_STMT, stmt);
 
@@ -204,12 +202,10 @@ int new(SQLHDBC dbc, int customer_id, int film_id, int staff_id, int store_id, d
 
 
   /* Insert payment */
-  sprintf(query_insert_payment, "INSERT INTO payment VALUES (%d, %d, %d, %d, %f, Now()) ", new_payment_id, customer_id, staff_id, new_rental_id, amount);
+  sprintf(query_insert_payment, "INSERT INTO payment VALUES (%d, %d, %d, %d, %lf, Now()) ", new_payment_id, customer_id, staff_id, new_rental_id, amount);
   SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
   SQLExecDirect(stmt, (SQLCHAR*) query_insert_payment, SQL_NTS);
   SQLFreeHandle(SQL_HANDLE_STMT, stmt);
-
-  printf("%s\n", query_insert_payment);
 
   return 1;
 }

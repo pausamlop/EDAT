@@ -6,8 +6,8 @@ PAREJA=06
 # a parir de esta línea
 # export PGDATABASE:=$(GRUPO)_$(PAREJA)
 export PGDATABASE:=dvdrental
-export PGUSER :=alumnodb
-export PGPASSWORD :=alumnodb
+export PGUSER :=postgres
+export PGPASSWORD :=postgres
 export PGCLIENTENCODING:=LATIN9
 export PGHOST:=localhost
 

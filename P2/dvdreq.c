@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
 
     /* Chek number of arguments */
     if (argc < 2){
-      fprintf(stderr, "Error in the input parameters\n");
+      fprintf(stderr, "Error in the input parameters: too few arguments\n");
       exit(1);
     }
 
@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
     if (strcmp(argv[1], "customer") == 0){
       /* Check number of input parameters */
       if (argc != 6){
-        fprintf(stderr, "Error in the input parameters\n");
+        fprintf(stderr, "Error in the input parameters: dvdreq customer -n <first_name> -a <last_name>\n");
         exit(1);
       }
 
@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
         if (strcmp(argv[i], "-n") == 0) strcpy(fname, argv[++i]);
         else if (strcmp(argv[i], "-a") == 0) strcpy(lname,argv[++i]);
         else {
-          fprintf(stderr, "Parameter %d is incorrect\n", i);
+          fprintf(stderr, "Parameter %d is incorrect: dvdreq customer -n <first_name> -a <last_name>\n", i);
           exit(1);
         }
     }
@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
 
     else if (strcmp(argv[1], "film") == 0){
       if (argc != 3){
-        fprintf(stderr, "Error in the input parameters\n");
+        fprintf(stderr, "Error in the input parameters: dvdreq film <title>\n");
         exit(1);
       }
 
@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
 
     else if (strcmp(argv[1], "rent") == 0){
       if (argc != 5){
-        fprintf(stderr, "Error in the input parameters\n");
+        fprintf(stderr, "Error in the input parameters: dvdreq rent <customer_id> <init_date> <end_date>\n");
         exit(1);
       }
 
@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
 
     else if (strcmp(argv[1], "recommend") == 0){
       if (argc != 3){
-        fprintf(stderr, "Error in the input parameters\n");
+        fprintf(stderr, "Error in the input parameters: dvdreq recommend <customer_id>\n");
         exit(1);
       }
 
@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
      }
 
      else{
-       fprintf(stderr, "Error in the input parameters\n");
+       fprintf(stderr, "Error in the input parameters: second argument has to be customer, film, rent or recommend\n");
      }
 
 
@@ -198,8 +198,8 @@ int film(SQLHDBC dbc, char* title){
     ret = SQLGetData(stmt, 4, SQL_C_SLONG, &lenght, sizeof(lenght), NULL);
     ret = SQLGetData(stmt, 5, SQL_C_CHAR, language, sizeof(language), NULL);
     ret = SQLGetData(stmt, 6, SQL_C_CHAR, description, sizeof(description), NULL);
-    printf("%10s %20s %15s %10s %12s\t%s\n", "film_id", "title", "release_year", "lenght", "language", "description");
-    printf("%10d %20s %15s %10d %12s\t%s\n", film_id, film_title, release_year, lenght, language, description);
+    printf("%10s %20s %15s %10s %12s\t%-1s\n", "film_id", "title", "release_year", "lenght", "language", "description");
+    printf("%10d %20s %15s %10d %12s\t%-1s\n", film_id, film_title, release_year, lenght, language, description);
     film_actors(dbc, film_id);
   }
 
@@ -228,6 +228,7 @@ int rent(SQLHDBC dbc, int customer_id, char* init_date, char* end_date){
   SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
   SQLExecDirect(stmt, (SQLCHAR*) query, SQL_NTS);
 
+  printf("%12s\t%12s\t%20s\t%8s\t%25s\t%9s\t%10s\t%10s\t%9s\t%6s\n","customer_id", "rental_id", "rental_date", "film_id", "title", "staff_id", "first_name", "last_name", "store_id", "amount");
   while (SQL_SUCCEEDED(ret = SQLFetch(stmt))) {
       ret = SQLGetData(stmt, 1, SQL_C_SLONG, &customer_customer_id, sizeof(customer_customer_id), NULL);
       ret = SQLGetData(stmt, 2, SQL_C_SLONG, &rental_rental_id, sizeof(rental_rental_id), NULL);
@@ -240,7 +241,7 @@ int rent(SQLHDBC dbc, int customer_id, char* init_date, char* end_date){
       ret = SQLGetData(stmt, 9, SQL_C_SLONG, &store_store_id, sizeof(store_store_id), NULL);
       ret = SQLGetData(stmt, 10, SQL_C_DOUBLE, &payment_amount, sizeof(payment_amount), NULL);
 
-      printf("%4d\t%4d\t%20s\t%4d\t%25s\t%1d\t%10s\t%10s\t%3d\t%3f\n", customer_customer_id,rental_rental_id,rental_rental_date,film_film_id,film_title,staff_staff_id,staff_first_name,staff_last_name,store_store_id,payment_amount );
+      printf("%12d\t%12d\t%20s\t%8d\t%25s\t%9d\t%10s\t%10s\t%9d\t%6.2f\n", customer_customer_id,rental_rental_id,rental_rental_date,film_film_id,film_title,staff_staff_id,staff_first_name,staff_last_name,store_store_id,payment_amount );
   }
 
   SQLFreeHandle(SQL_HANDLE_STMT, stmt);
