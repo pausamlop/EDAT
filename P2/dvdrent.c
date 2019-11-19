@@ -60,6 +60,11 @@ int main(int argc, char** argv) {
       remove_rental (dbc, rent_id);
     }
 
+    else{
+      fprintf(stderr, "Error in the input parameters: second argument has to be new or remove\n");
+
+    }
+
 
     /* DISCONNECT */
     ret = odbc_disconnect(env, dbc);
@@ -166,7 +171,6 @@ int new(SQLHDBC dbc, int customer_id, int film_id, int staff_id, int store_id, d
     return 0;
   }
   ret = SQLGetData(stmt, 1, SQL_C_SLONG, &unrented_dvd, sizeof(unrented_dvd), NULL);
-  printf("unrented_dvd = %d\n", unrented_dvd);
   SQLFreeHandle(SQL_HANDLE_STMT, stmt);
 
 
@@ -178,7 +182,6 @@ int new(SQLHDBC dbc, int customer_id, int film_id, int staff_id, int store_id, d
   while (SQL_SUCCEEDED(ret = SQLFetch(stmt))){
     ret = SQLGetData(stmt, 1, SQL_C_SLONG, &new_rental_id, sizeof(new_rental_id), NULL);
   }
-  printf("new_rental_id = %d\n", new_rental_id);
   SQLFreeHandle(SQL_HANDLE_STMT, stmt);
 
 
@@ -190,7 +193,6 @@ int new(SQLHDBC dbc, int customer_id, int film_id, int staff_id, int store_id, d
   while (SQL_SUCCEEDED(ret = SQLFetch(stmt))){
     ret = SQLGetData(stmt, 1, SQL_C_SLONG, &new_payment_id, sizeof(new_payment_id), NULL);
   }
-  printf("new_payment_id = %d\n", new_payment_id);
   SQLFreeHandle(SQL_HANDLE_STMT, stmt);
 
 
@@ -199,6 +201,7 @@ int new(SQLHDBC dbc, int customer_id, int film_id, int staff_id, int store_id, d
   SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
   SQLExecDirect(stmt, (SQLCHAR*) query_insert_rental, SQL_NTS);
   SQLFreeHandle(SQL_HANDLE_STMT, stmt);
+  printf("Rental of DVD %d inserted with id %d\n", unrented_dvd, new_rental_id);
 
 
   /* Insert payment */
@@ -206,6 +209,8 @@ int new(SQLHDBC dbc, int customer_id, int film_id, int staff_id, int store_id, d
   SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
   SQLExecDirect(stmt, (SQLCHAR*) query_insert_payment, SQL_NTS);
   SQLFreeHandle(SQL_HANDLE_STMT, stmt);
+
+  printf("Payment inserted with id %d\n", new_payment_id);
 
   return 1;
 }
@@ -230,6 +235,8 @@ int remove_rental(SQLHDBC dbc, int rent_id){
   SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
   SQLExecDirect(stmt, (SQLCHAR*) rental, SQL_NTS);
   SQLFreeHandle(SQL_HANDLE_STMT, stmt);
+
+  printf("Rental %d has been removed\n", rent_id);
 
 
   return 1;
