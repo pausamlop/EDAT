@@ -99,7 +99,7 @@ table_t* table_open(char* path) {
 
   table->f = fopen(path, "r+");
   if(!(table->f)){
-    free(table);
+    table_close(table); //free(table);
     return NULL;
   }
   fread(&(table->ncols), sizeof(int), 1, table->f);
@@ -217,7 +217,7 @@ long table_first_pos(table_t* table) {
     n<=0:   error in the parameter
 */
 long table_last_pos(table_t* table) {
-  if(!table) return -1L;
+  if(!table) return -1;  //-1L
   fseek(table->f,0,SEEK_END);
   return ftell(table->f);
 }
@@ -242,11 +242,13 @@ long table_last_pos(table_t* table) {
     after it has been read.
 */
 long table_read_record(table_t* t, long pos) {
-  if(!t || pos<0) return -1L;
+  int len;
+  if(!t || pos<0) return -1;
 
-  //fread(&(table->ncols), sizeof(int), 1, table->f);
+  fseek(table->f, pos, SEEK_SET);
+  fread(&len, sizeof(int), 1, table->f);
 
-  return -1L;
+  return fpos+len;
 }
 
 
@@ -292,3 +294,5 @@ void *table_get_col(table_t* table, int col) {
 int table_insert_record(table_t* t, void** values) {
   return 0;
 }
+
+
