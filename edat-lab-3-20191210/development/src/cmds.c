@@ -3,12 +3,12 @@
     File:    cmds.c
     Author:  Simone Santini
     Rev.     1.0
-    Date:    10/11/2019 
-    
+    Date:    10/11/2019
+
     This file contains the main command execution function as well as the
     function that does a controlled reading of the commands from the screen.
-    
-    
+
+
     See cmds.h for details and a list of commands.
 */
 
@@ -22,25 +22,25 @@
 #include <string.h>
 
 
-/* 
+/*
     This structure maintain the global status of the system. It contains
-    the following fields:  
-    
-    text_in:  flag that determines whether we have valid text file data in 
+    the following fields:
+
+    text_in:  flag that determines whether we have valid text file data in
               main memory
     text_data: data for the text file, as returned by the function f_read
     text_file: name of the text file
-    
+
     table_in:   flag that determines whether there is a table in memory
-    table:      table structure, as in table.c 
-    tablefile:  name of the table 
+    table:      table structure, as in table.c
+    tablefile:  name of the table
     orig_key:  structure in which the original parameters of the keyboard
                are stored. The function c_get_cmd uses modified keyboard
-               parameter, and the keyboard must be restored before exiting 
+               parameter, and the keyboard must be restored before exiting
                the program. The original status is stored here.
     index_in:  flag that determines whether there is a index in memory
-    index:     index structure, as in index.c 
-    indexfile:  name of the index 
+    index:     index structure, as in index.c
+    indexfile:  name of the index
     key_changed: flag that determines whether we are already in the key_changed
                 mode. Used to avoid doing the change twice.
 */
@@ -49,7 +49,7 @@ struct _cmdstatus {
     int text_in;
     filedata *txtdata;
     char *txtfile;
-    
+
     int table_in;
     void *table;
     char *tablefile;
@@ -64,14 +64,14 @@ struct _cmdstatus {
 
 
 /*
-    This is the type of the functions that execute one of the commands. they 
-    receive the command line (complete: including the command), and the 
+    This is the type of the functions that execute one of the commands. they
+    receive the command line (complete: including the command), and the
     status. Execute the command and returnn:
-    
+
     0:  executed correctly
     1:  the command in the command line is not the one in the function
     2:  some parameter was incorrect (message written on the screen).
-    
+
     The status structure is updated, if necessary.
 */
 
@@ -85,7 +85,7 @@ typedef int (*cmd_f)(cmdstatus *, char *);
 #define tclose   "tclose"
 #define topen    "topen"
 #define check    "check"
-#define tshow    "tshow" 
+#define tshow    "tshow"
 #define verify   "verify"
 #define mkindex  "mkindex"
 #define iinsert  "iinsert"
@@ -110,14 +110,14 @@ typedef struct {
 
 /************************************************************************
  *
- *             A U X I L I A R Y    F U N C T I O N S 
- * 
+ *             A U X I L I A R Y    F U N C T I O N S
+ *
  ************************************************************************/
 
 /*
   Auxiliary function: _free_text(cmdstatus *cs)
 
-  If the text file has been allocated in the given status, releases it and 
+  If the text file has been allocated in the given status, releases it and
   marks the status as having no text file.
 
   Returns:
@@ -136,7 +136,7 @@ void _free_text(cmdstatus *cs) {
 /*
   Auxiliary function: _free_table(cmdstatus *cs)
 
-  If the table has been allocated in the given status, releases it and 
+  If the table has been allocated in the given status, releases it and
   marks the status as having no table.
 
   Returns:
@@ -155,7 +155,7 @@ void _free_table(cmdstatus *cs) {
 /*
   Auxiliary function: _free_index(cmdstatus *cs)
 
-  If an index has been allocated in the given status, releases it and 
+  If an index has been allocated in the given status, releases it and
   marks the status as having no index.
 
   Returns:
@@ -175,14 +175,14 @@ void _free_index(cmdstatus *cs) {
 
 /*
   Auxiliary function: char *_get_par(char *line, char *cmd, char *err_msg)
-  
+
   Receives the input line and the command. Checks that the input line
   begins with the given command, otherwise prints an error
   message. After that, isolates and returns the parameter that follows
   the command, with the leading and trailing spaces removed. If the
   parameter is not present, print the contents of err?msg.
 
-  Returns: 
+  Returns:
   The parameter that follows the command, isolated in the same line
   that is passed as a paramter. Returns NULL if there is no paramenter
   after the command.
@@ -208,19 +208,19 @@ char *_get_par(char *line, char *cmd, char *err_msg) {
   }
   *(c+1) = 0;
   return p;
-}  
+}
 
 
 /*
   Auxiliary function: char **_get_two_par(char *line, char *cmd, char *err_msg)
-  
+
   Receives the input line and the command. Checks that the input line
   begins with the given command, otherwise prints an error
   message. After that, isolates and returns the two parameters that
   follow the command, with the leading and trailing spaces removed. If
   the parameter is not present, print the contents of err_msg.
 
-  Returns:   
+  Returns:
   An array of two strings, with the parameter that follows the
   command, isolated in the same line that is passed as a
   paramter. Note that the individual pointers should bot be released,
@@ -262,7 +262,7 @@ char **_get_two_par(char *line, char *cmd, char *err_msg) {
     *p = 0;
   }
   return w;
-}  
+}
 
 
 /*
@@ -281,7 +281,7 @@ char **_get_two_par(char *line, char *cmd, char *err_msg) {
   1:  the records are the same
   0:  the records differ
 
-  In addition, the function prints the contents of the records. 
+  In addition, the function prints the contents of the records.
 */
 int _tuple_check(void **txtval, table_t *tb, int ncols, type_t *types) {
   for (int i=0; i<ncols; i++) {
@@ -299,7 +299,7 @@ int _tuple_check(void **txtval, table_t *tb, int ncols, type_t *types) {
       printf("Record mismatch!\n");
       return 0;
     }
-  }      
+  }
   return 1;
 }
 
@@ -367,23 +367,23 @@ int _check(cmdstatus *cs) {
     if (tp[i] != tp1[i]) {
       printf("Type mismatch on column %d\n", i);
       return 0;
-    }    
-  }      
+    }
+  }
   long pt = table_first_pos(cs->table);
   for (int i=0; i<f_records(cs->txtdata); i++) {
     pt = table_read_record(cs->table, pt);
     if (pt<0) {
       printf("Mismatch on record number: text has more than the table\n");
       return 0;
-    }    
-    if (!_tuple_check(f_vals(cs->txtdata, i), cs->table, table_ncols(cs->table), table_types(cs->table))) 
+    }
+    if (!_tuple_check(f_vals(cs->txtdata, i), cs->table, table_ncols(cs->table), table_types(cs->table)))
       return 0;
   }
   pt = table_read_record(cs->table, pt);
   if (pt>0) {
     printf("Mismatch on record number: table has more than the text\n");
     return 0;
-  }    
+  }
   return 1;
 }
 
@@ -398,21 +398,21 @@ int _check(cmdstatus *cs) {
 
 /*
   Function:  int _cmd_read(cmdstatus *cs, char*line)
-  
-  Executes the read command: reads a text file specified in the command 
-  line) in the command status and updates the command structure 
+
+  Executes the read command: reads a text file specified in the command
+  line) in the command status and updates the command structure
   accordingly.
 
   Parameters:
   cs:   the current status of the program (see the cmdstatus structure
         definition)
-  line: the complete line given as a command (that is, including the 
+  line: the complete line given as a command (that is, including the
         command itself)
 
-  
+
   returns 1 on success, 0 on failure (prints a message if necessary)
 */
-int _cmd_read(cmdstatus *cs, char*line) {  
+int _cmd_read(cmdstatus *cs, char*line) {
   char *p = _get_par(line, read, "Usage: read <file>");
   if (!p) return 0;
 
@@ -432,7 +432,7 @@ int _cmd_read(cmdstatus *cs, char*line) {
 
 /*
   Function:  int _cmd_tmake(cmdstatus *cs, char*line)
-  
+
   Executes the tmake command: stores the contents of the text file
   currently in memory on the table specified in the command line. If
   there is no text file in memory, no table is created.
@@ -440,9 +440,9 @@ int _cmd_read(cmdstatus *cs, char*line) {
   Parameters:
   cs:   the current status of the program (see the cmdstatus structure
         definition)
-  line: the complete line given as a command (that is, including the 
+  line: the complete line given as a command (that is, including the
         command itself)
-  
+
   returns 1 on success, 0 on failure (prints a message if necessary)
 */
 int _cmd_tmake(cmdstatus *cs, char*line) {
@@ -460,23 +460,23 @@ int _cmd_tmake(cmdstatus *cs, char*line) {
   }
   cs->table_in = 1;
   cs->tablefile = strdup(p);
-  for (int i=0; i<f_records(cs->txtdata); i++) 
+  for (int i=0; i<f_records(cs->txtdata); i++)
     table_insert_record(cs->table, f_vals(cs->txtdata, i));
   return 1;
 }
 
 /*
   Function:  int _cmd_topen(cmdstatus *cs, char*line)
-  
+
   Executes the topen command: opens a table and keeps it in memory as
   the current table.
 
   Parameters:
   cs:   the current status of the program (see the cmdstatus structure
         definition)
-  line: the complete line given as a command (that is, including the 
+  line: the complete line given as a command (that is, including the
         command itself)
-  
+
   returns 1 on success, 0 on failure (prints a message if necessary)
 */
 int _cmd_topen(cmdstatus *cs, char*line) {
@@ -495,15 +495,15 @@ int _cmd_topen(cmdstatus *cs, char*line) {
 
 /*
   Function:  int _cmd_tclose(cmdstatus *cs, char*line)
-  
+
   Executes the tclose command: closes the currently opened table.
 
   Parameters:
   cs:   the current status of the program (see the cmdstatus structure
         definition)
-  line: the complete line given as a command (that is, including the 
+  line: the complete line given as a command (that is, including the
         command itself)
-  
+
   returns 1 on success, 0 on failure (prints a message if necessary)
 */
 int _cmd_tclose(cmdstatus *cs, char*line) {
@@ -525,16 +525,16 @@ int _cmd_tclose(cmdstatus *cs, char*line) {
 
 /*
   Function:  int _cmd_check(cmdstatus *cs, char*line)
-  
+
   Executes the check command: checks whether the text in memory and the contents
   of the table have the same content.
 
   Parameters:
   cs:   the current status of the program (see the cmdstatus structure
         definition)
-  line: the complete line given as a command (that is, including the 
+  line: the complete line given as a command (that is, including the
         command itself)
-  
+
   returns 1 on success, 0 on failure (prints a message if necessary)
 */
 int _cmd_check(cmdstatus *cs, char*line) {
@@ -552,15 +552,15 @@ int _cmd_check(cmdstatus *cs, char*line) {
 
 /*
   Function:  int _cmd_tshow(cmdstatus *cs, char*line)
-  
+
   Executes the tshow command: Shows the nth record of a table
 
   Parameters:
   cs:   the current status of the program (see the cmdstatus structure
         definition)
-  line: the complete line given as a command (that is, including the 
+  line: the complete line given as a command (that is, including the
         command itself)
-  
+
   returns 1 on success, 0 on failure (prints a message if necessary)
 */
 int _cmd_tshow(cmdstatus *cs, char*line) {
@@ -571,7 +571,7 @@ int _cmd_tshow(cmdstatus *cs, char*line) {
   if (!cs->table_in) {
     printf("No table in memory\n");
     return 0;
-  }  
+  }
   long pt = table_first_pos(cs->table);
   for (int i=0; i<n; i++) {
     pt = table_read_record(cs->table, pt);
@@ -586,16 +586,16 @@ int _cmd_tshow(cmdstatus *cs, char*line) {
 
 /*
   Function:  int _cmd_verify(cmdstatus *cs, char*line)
-  
+
   Executes the verify command: loads a text file, creates a table for it, then
   verifies the equality of the two
 
   Parameters:
   cs:   the current status of the program (see the cmdstatus structure
         definition)
-  line: the complete line given as a command (that is, including the 
+  line: the complete line given as a command (that is, including the
         command itself)
-  
+
   returns 1 on success, 0 on failure (prints a message if necessary)
 */
 int _cmd_verify(cmdstatus *cs, char*line) {
@@ -620,7 +620,7 @@ int _cmd_verify(cmdstatus *cs, char*line) {
     return 0;
   }
   cs->table_in = 1;
-  for (int i=0; i<f_records(cs->txtdata); i++) 
+  for (int i=0; i<f_records(cs->txtdata); i++)
     table_insert_record(cs->table, f_vals(cs->txtdata, i));
   table_close(cs->table);
 
@@ -631,16 +631,16 @@ int _cmd_verify(cmdstatus *cs, char*line) {
 
 /*
   Function:  int _cmd_mkindex(cmdstatus *cs, char*line)
-  
-  Executes the mkindex command: creates an empty index in memory and 
+
+  Executes the mkindex command: creates an empty index in memory and
   on the given file. The index is created and then opened in memory.
 
   Parameters:
   cs:   the current status of the program (see the cmdstatus structure
         definition)
-  line: the complete line given as a command (that is, including the 
+  line: the complete line given as a command (that is, including the
         command itself)
-  
+
   returns 1 on success, 0 on failure (prints a message if necessary)
 */
 int _cmd_mkindex(cmdstatus *cs, char*line) {
@@ -663,16 +663,16 @@ int _cmd_mkindex(cmdstatus *cs, char*line) {
 
 /*
   Function:  int _cmd_iinsert(cmdstatus *cs, char*line)
-  
+
   Executes the iinsert command: inserts a (key, position) pair into an
-  index.  
+  index.
 
   Parameters:
   cs:   the current status of the program (see the cmdstatus structure
         definition)
-  line: the complete line given as a command (that is, including the 
+  line: the complete line given as a command (that is, including the
         command itself)
-  
+
   returns 1 on success, 0 on failure (prints a message if necessary)
 */
 int _cmd_iinsert(cmdstatus *cs, char*line) {
@@ -700,16 +700,16 @@ int _cmd_iinsert(cmdstatus *cs, char*line) {
 
 /*
   Function:  int _cmd_ifind(cmdstatus *cs, char*line)
-  
+
   Executes the ifind command: searches the index for a key and prints
   all the positions associated to it.
 
   Parameters:
   cs:   the current status of the program (see the cmdstatus structure
         definition)
-  line: the complete line given as a command (that is, including the 
+  line: the complete line given as a command (that is, including the
         command itself)
-  
+
   returns 1 on success, 0 on failure (prints a message if necessary)
 */
 int _cmd_ifind(cmdstatus *cs, char*line) {
@@ -731,7 +731,7 @@ int _cmd_ifind(cmdstatus *cs, char*line) {
   }
   else {
     printf("%d --> ", key);
-    for (int k=0; k<npos; k++) 
+    for (int k=0; k<npos; k++)
       printf("%ld\t", poss[k]);
     printf("\n");
   }
@@ -741,7 +741,7 @@ int _cmd_ifind(cmdstatus *cs, char*line) {
 
 /*
   Function:  int _cmd_ishow(cmdstatus *cs, char*line)
-  
+
   Executes the ishow command: shows the contents of an index in the
   order in which they are stored (if the index is correct, the primary
   keys should come out ordered).
@@ -749,9 +749,9 @@ int _cmd_ifind(cmdstatus *cs, char*line) {
   Parameters:
   cs:   the current status of the program (see the cmdstatus structure
         definition)
-  line: the complete line given as a command (that is, including the 
+  line: the complete line given as a command (that is, including the
         command itself)
-  
+
   returns 1 on success, 0 on failure (prints a message if necessary)
 */
 int _cmd_ishow(cmdstatus *cs, char*line) {
@@ -770,9 +770,9 @@ int _cmd_ishow(cmdstatus *cs, char*line) {
   int key = 0;
   long *poss;
 
-  for (int n=0; poss= index_get_order(cs->index, n, &key, &npos); n++) {
+  for (int n=0; poss = index_get_order(cs->index, n, &key, &npos); n++) {
     printf("%d --> ", key);
-    for (int k=0; k<npos; k++) 
+    for (int k=0; k<npos; k++)
       printf("%ld\t", poss[k]);
     printf("\n");
   }
@@ -784,7 +784,7 @@ int _cmd_ishow(cmdstatus *cs, char*line) {
 
 /*
   Function:  int _cmd_tindex(cmdstatus *cs, char*line)
-  
+
   Executes the tindex command: Creates an index in the file <file> for
     the column <col> of the table currently in memory, and stores all
     the record in the index
@@ -792,9 +792,9 @@ int _cmd_ishow(cmdstatus *cs, char*line) {
   Parameters:
   cs:   the current status of the program (see the cmdstatus structure
         definition)
-  line: the complete line given as a command (that is, including the 
+  line: the complete line given as a command (that is, including the
         command itself)
-  
+
   returns 1 on success, 0 on failure (prints a message if necessary)
 */
 int _cmd_tindex(cmdstatus *cs, char*line) {
@@ -837,16 +837,16 @@ int _cmd_tindex(cmdstatus *cs, char*line) {
 
 /*
   Function:  int _cmd_retrieve(cmdstatus *cs, char*line)
-  
+
   Executes the retrieve command: searches the index for a key and prints
   all the positions associated to it.
 
   Parameters:
   cs:   the current status of the program (see the cmdstatus structure
         definition)
-  line: the complete line given as a command (that is, including the 
+  line: the complete line given as a command (that is, including the
         command itself)
-  
+
   returns 1 on success, 0 on failure (prints a message if necessary)
 */
 int _cmd_retrieve(cmdstatus *cs, char*line) {
@@ -876,13 +876,13 @@ int _cmd_retrieve(cmdstatus *cs, char*line) {
 
 /*
   Function:  int _cmd_help(cmdstatus *cs, char*line)
-  
+
   Executes the help command: prints a help message on the screen
   taking it from the file t_help.txt.
 
   Parameters:
     Ignored
-    
+
   Returns:
   1: help printed
   0: help file not found
@@ -894,7 +894,7 @@ int _cmd_help(cmdstatus *cs, char *line) {
         return 0;
     }
     char buf[1000];
-    while(fgets(buf, 1000, hf)) 
+    while(fgets(buf, 1000, hf))
         printf("%s", buf);
     printf("\n");
     fclose(hf);
@@ -905,16 +905,16 @@ int _cmd_help(cmdstatus *cs, char *line) {
 
 /************************************************************************
  *
- *  P U B L I C    F U N C T I O N S 
- * 
- * 
+ *  P U B L I C    F U N C T I O N S
+ *
+ *
  ************************************************************************/
 
 
 /*
     Function: c_create()
 
-    Creates an empty command status function and returns it. 
+    Creates an empty command status function and returns it.
 */
 cmdstatus *c_create() {
     cmdstatus *cs = (cmdstatus *) malloc(sizeof(cmdstatus));
@@ -924,14 +924,14 @@ cmdstatus *c_create() {
     cs->table_in = 0;
     cs->table = NULL;
     cs->tablefile = NULL;
-    
+
     cs->index_in = 0;
     cs->index = NULL;
     cs->indexfile = NULL;
 
     tcgetattr(fileno(stdin), &(cs->orig_key));
     cs->key_changed = 0;
-    
+
     return cs;
 }
 
@@ -956,59 +956,59 @@ void c_close(cmdstatus *cs) {
 
 /*
     Function: c_key_init(cmdstatus *cs)
-    
-    Initializes the keyboard to work in the non-standard mode that we 
+
+    Initializes the keyboard to work in the non-standard mode that we
     need to control command input with the function cmd_get: this function
-    should be called once before calling c_cmd_get for the first time. At the 
-    end of the program, the main program should call c_key_restore to 
+    should be called once before calling c_cmd_get for the first time. At the
+    end of the program, the main program should call c_key_restore to
     restore the keyboard in its default state.
 */
 void c_key_init(cmdstatus *cs) {
     if (!cs) return;
     if (cs->key_changed) return;
 
-	struct termios new; /*a termios structure contains a set of attributes about 
+	struct termios new; /*a termios structure contains a set of attributes about
 					    how the terminal scans and outputs data*/
-		
-	new = cs->orig_key;	    
-						        
-	new.c_lflag &= ~ICANON;    
-						       
-						  
-	new.c_lflag &= ~ECHO; 
-						  
-	new.c_cc[VMIN] = 1;   
-					      
-	new.c_cc[VTIME] = 0;  
-	new.c_lflag &= ~ISIG; 
-						  
-	tcsetattr(fileno(stdin), TCSANOW, &new);  
+
+	new = cs->orig_key;
+
+	new.c_lflag &= ~ICANON;
+
+
+	new.c_lflag &= ~ECHO;
+
+	new.c_cc[VMIN] = 1;
+
+	new.c_cc[VTIME] = 0;
+	new.c_lflag &= ~ISIG;
+
+	tcsetattr(fileno(stdin), TCSANOW, &new);
     cs->key_changed = 1;
     return;
 }
 
 /*
     Function: c_key_restore(cmdstatus *cmd);
-    
+
     Restores the keyboard to work in the standard mode. This function
-    should be called once before exiting the program. 
+    should be called once before exiting the program.
 */
 void c_key_restore(cmdstatus *cs) {
     if (!cs) return;
     if (!cs->key_changed) return;
-	tcsetattr(fileno(stdin), TCSANOW, &(cs->orig_key));  
+	tcsetattr(fileno(stdin), TCSANOW, &(cs->orig_key));
     return;
 }
 
 /*
     Function:  char *c_cmd_get(int maxlen);
-    
-    Reads a line from the keyboard, limiting the inmput to maxlen 
+
+    Reads a line from the keyboard, limiting the inmput to maxlen
     characters. Only maxlen characters will be displayed on the screen
     (if you type more, the last character will be overwritten).
-    Only the ascii characters, the backspace and the Enter key are 
+    Only the ascii characters, the backspace and the Enter key are
     recognized.
-    
+
     Returns: the string entered or NULL if there is any problem.
 */
 char *c_cmd_get(int max_len) {
@@ -1016,7 +1016,7 @@ char *c_cmd_get(int max_len) {
     int cur = 0;
     char prompt[] = "$ ";
     int begin = strlen(prompt) + 1;
-    
+
     printf("%s", prompt);
     while(1) {
         printf("%c[%dG", 27, begin+cur);
@@ -1069,12 +1069,12 @@ cmd_data cmds[] = {
 
 /*
     Function: int c_execute(cmdstatus *cs, char *cmd)
-    
-    Executes the command "cmd", given as it is read from the command 
-    line. Searches the command in the command list and executes the 
-    associated function. Prints an error message if the command does not 
+
+    Executes the command "cmd", given as it is read from the command
+    line. Searches the command in the command list and executes the
+    associated function. Prints an error message if the command does not
     exist in the list.
-    
+
     Returns 1 if the command has been executed, 0 if it was unknown or
     there was en error.
 */

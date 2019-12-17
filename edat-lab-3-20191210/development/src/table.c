@@ -150,7 +150,6 @@ void table_close(table_t* table) {
   free(table->buffer);
   free(table);
 
-  return;
 }
 
 /*
