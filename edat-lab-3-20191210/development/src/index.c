@@ -20,30 +20,25 @@ struct index_ {
 
 
 /*AUXILIARY FUNCTIONS*/
-int bbin(irecord_t **tabla, int P, int U, int clave, int *ppos){
-
+int bbin(irecord_t **tabla, int P, int U, int clave){
     int medio;
-
-    if(tabla == NULL || P > U || clave < 0)
-    return -1;
-
-    if(P > U){
-        *ppos = NO_ENCONTRADO;
-        return -1;
-    }
 
     medio = (P + U) / 2;
 
+    if(P >= U) {
+      int q = -(medio+1);
+      return q;
+    }
+
     if(tabla[medio]->key == clave){
-        *ppos = medio;
-        return 1;
+        return medio;
     }
 
     if(clave < tabla[medio]->key)
-        return bbin(tabla, P, medio - 1, clave, ppos) + 1;
+        return bbin(tabla, P, medio - 1, clave);
 
     else
-        return bbin(tabla, medio + 1, U, clave, ppos) + 1;
+        return bbin(tabla, medio + 1, U, clave);
 
 }
 /*
@@ -62,14 +57,16 @@ Returns:
 0:   parameter error or file creation problem. Index not created.
 */
 int index_create(char *path, type_t type) {
-
     FILE *file = NULL;
     int n_records = 0;
+
+    if (!path || type != 0)
+      return 0;
 
     file = fopen(path, "w");
 
     if(file == NULL)
-        return 0;
+      return 0;
 
     fwrite(&type, sizeof(int), 1, file);
     fwrite(&n_records, sizeof(int),1,file);
@@ -102,7 +99,6 @@ NULL: parameter error or file opening problem. Index not opened.
 
 */
 index_t* index_open(char* path) {
-
     index_t *idx = NULL;
     FILE *file = NULL;
     int i;
@@ -110,7 +106,9 @@ index_t* index_open(char* path) {
     int end;
     long pos = 0;
 
-    file = fopen(path, "a+");
+    if (!path) return NULL;
+
+    file = fopen(path, "r+");
 
     if(file == NULL)
         return NULL;
@@ -121,10 +119,18 @@ index_t* index_open(char* path) {
 
     idx = (index_t*)malloc(sizeof(index_t));
 
-    if(idx == NULL)
-        return NULL;
+    if(idx == NULL){
+      fclose(file);
+      return NULL;
+    }
 
-    idx->path = path;
+    idx->path = (char *)malloc((strlen(path) + 1)*sizeof(char));
+    if (!idx->path){
+      index_close(idx);
+      fclose(file);
+      return NULL;
+    }
+    strcpy(idx->path, path);
     idx->records = NULL;
 
     fread(&(idx->type), sizeof(int), 1, file);
@@ -134,6 +140,11 @@ index_t* index_open(char* path) {
         return idx;
 
     idx->records = (irecord_t**)malloc(idx->n_records * sizeof(irecord_t*));
+    if (!idx->records){
+      index_close(idx);
+      fclose(file);
+      return NULL;
+    }
 
     for(i = 0; i < idx->n_records; i++)
       idx->records[i] = NULL;
@@ -141,7 +152,11 @@ index_t* index_open(char* path) {
     for(i = ftell(file); i < end; i = ftell(file)){
         fread(&key, sizeof(int), 1, file);
         fread(&pos, sizeof(long), 1, file);
-        index_put(idx, key, pos);
+        if (index_put(idx, key, pos) == -1){
+          index_close(idx);
+          fclose(file);
+          return NULL;
+        }
     }
 
     fclose(file);
@@ -166,13 +181,14 @@ Returns:
 
 */
 int index_save(index_t* idx) {
-
     FILE *file = NULL;
     int i,j;
 
+    if (!idx) return 0;
+
     if(index_create(idx->path, idx->type) == 0) return 0;
 
-    file = fopen(idx->path, "a+");
+    file = fopen(idx->path, "w+");
 
     if(file == NULL)
         return 0;
@@ -213,65 +229,62 @@ n>0:  after insertion the file now contains n unique keys
 
 */
 int index_put(index_t *idx, int key, long pos) {
-
     int i =0;
     int ppos;
 
-    if(idx->n_records == 0){
+    if (!idx || pos < 0) return 0;
+
+    if(idx->n_records == 0 || key > idx->records[idx->n_records-1]->key){
 
         idx->n_records++;
-        idx->records = (irecord_t**)malloc(idx->n_records * sizeof(irecord_t*));
+        idx->records = (irecord_t**)realloc(idx->records, idx->n_records * sizeof(irecord_t*));
 
-        for(i = 0; i < idx->n_records; i++)
-          idx->records[i] = NULL;
+        idx->records[idx->n_records-1] = (irecord_t *)malloc(sizeof(irecord_t));
 
-        idx->records[0] = (irecord_t *)malloc(sizeof(irecord_t));
-
-        if(idx->records[0]->pos == NULL){
+        if(idx->records[idx->n_records-1] == NULL){
             free(idx->records);
-            return -1;
+            return 0;
         }
 
-        idx->records[0]->key = key;
-        idx->records[0]->n_pos = 0;
+        idx->records[idx->n_records-1]->key = key;
+        idx->records[idx->n_records-1]->n_pos = 0;
 
-        idx->records[0]->pos = (long *)malloc(sizeof(long));
-        *(idx->records[0]->pos) = pos;
-        idx->records[0]->n_pos++;
+        idx->records[idx->n_records-1]->pos = (long *)malloc(sizeof(long));
+        if(idx->records[idx->n_records-1]->pos == NULL){
+            free(idx->records[idx->n_records-1]);
+            free(idx->records);
+            return 0;
+        }
+
+        *(idx->records[idx->n_records-1]->pos) = pos;
+        idx->records[idx->n_records-1]->n_pos++;
     }
 
     else{
 
-        int m = bbin(idx->records, 0, idx->n_records-1, key, &ppos);
+        int m = bbin(idx->records, 0, idx->n_records-1, key);
 
-        if(ppos == NO_ENCONTRADO){
+        if(m < 0){
+            m = -m-1;
             idx->n_records++;
             idx->records = realloc(idx->records, idx->n_records * sizeof(irecord_t *));
-
-            idx->records[idx->n_records - 1] = (irecord_t *)malloc(sizeof(irecord_t));
-
-            if(idx->records[idx->n_records - 1] == NULL) return -1;
+            if(!idx->records) return 0;
 
             for(i = idx->n_records - 1; i > m; i--)
                 idx->records[i] = idx->records[i - 1];
 
+            idx->records[m] = (irecord_t *)malloc(sizeof(irecord_t));
             idx->records[m]->pos = (long *)malloc(sizeof(long));
-
-            if(idx->records[m]->pos == NULL){
-                free(idx->records[idx->n_records - 1]);
-                return -1;
-            }
-
             idx->records[m]->key = key;
             *(idx->records[m]->pos) = pos;
             idx->records[m]->n_pos = 1;
 
         }
 
-        else if (ppos > 0){
-            idx->records[ppos]->n_pos++;
-            idx->records[ppos]->pos = (long *)realloc(idx->records[ppos]->pos, idx->records[ppos]->n_pos * sizeof(long));
-            idx->records[ppos]->pos[idx->records[ppos]->n_pos-1] = pos;
+        else if (m >= 0){
+            idx->records[m]->n_pos++;
+            idx->records[m]->pos = (long *)realloc(idx->records[m]->pos, idx->records[m]->n_pos * sizeof(long));
+            idx->records[m]->pos[idx->records[m]->n_pos-1] = pos;
         }
     }
 
@@ -317,17 +330,15 @@ caller guarantees that the values returned will not be changed.
 */
 long *index_get(index_t *idx, int key, int* nposs) {
 
-    int ppos;
+    int m = bbin(idx->records, 0, idx->n_records - 1, key);
 
-    int m = bbin(idx->records, 0, idx->n_records - 1, key, &ppos);
-
-    if(ppos == NO_ENCONTRADO){
-        printf("Not found\n");
+    if(m < 0 && m > -(idx->n_records)){
+        // printf("Not found\n");
         return NULL;
     }
     else{
-        *nposs = idx->records[ppos]->n_pos;
-        return idx->records[ppos]->pos;
+        *nposs = idx->records[m]->n_pos;
+        return idx->records[m]->pos;
     }
 }
 
@@ -346,11 +357,12 @@ NOTE: This function does NOT save the index on the file: you will
 have to call the function index_save for this.
 */
 void index_close(index_t *idx) {
-
     if(idx == NULL){
-        printf("ERROR AL LIBERAR INDEX EN index_close\n");
+        // printf("ERROR AL LIBERAR INDEX EN index_close\n");
         return;
     }
+    if (idx->path)
+      free(idx->path);
     if(idx->records){
         for (int i = 0; i < idx->n_records - 1; i++){
             if(idx->records[i]->pos)
@@ -388,7 +400,7 @@ See index_get for explanation on nposs and pos: they are the same stuff
 long *index_get_order(index_t *index, int n, int *key, int* nposs) {
 
     if (!index || !key || !nposs || n < 0) return NULL;
-    if (n > index->n_records) return NULL;
+    if (n >= index->n_records) return NULL;
 
     if (!index->records[n]->pos) return NULL;
 
