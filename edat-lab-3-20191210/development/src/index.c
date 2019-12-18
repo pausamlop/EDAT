@@ -3,7 +3,6 @@
 #include <string.h>
 #include "index.h"
 
-#define NO_ENCONTRADO -2
 
 struct irecord_ {
     int key;
@@ -19,28 +18,48 @@ struct index_ {
 };
 
 
-/*AUXILIARY FUNCTIONS*/
+// /*AUXILIARY FUNCTIONS*/
+// int bbin(irecord_t **tabla, int P, int U, int clave){
+//     int medio;
+//
+//     medio = (P + U) / 2;
+//
+//     if(P >= U) {
+//       int q = -(medio+1);
+//       return q;
+//     }
+//
+//     if(tabla[medio]->key == clave){
+//         return medio;
+//     }
+//
+//     if(clave < tabla[medio]->key)
+//         return bbin(tabla, P, medio - 1, clave);
+//
+//     else
+//         return bbin(tabla, medio + 1, U, clave);
+//
+// }
+
 int bbin(irecord_t **tabla, int P, int U, int clave){
     int medio;
+    while (P <= U) {
+        medio = (P + U) / 2;
 
-    medio = (P + U) / 2;
+        if (tabla[medio]->key == clave)
+            return medio;
 
-    if(P >= U) {
-      int q = -(medio+1);
-      return q;
+        if (clave > tabla[medio]->key)
+            P = medio + 1;
+
+        else
+            U = medio - 1;
     }
 
-    if(tabla[medio]->key == clave){
-        return medio;
-    }
-
-    if(clave < tabla[medio]->key)
-        return bbin(tabla, P, medio - 1, clave);
-
-    else
-        return bbin(tabla, medio + 1, U, clave);
-
+    return -(medio+1);
 }
+
+
 /*
 Function: int index_create(char *path, int type)
 
@@ -263,7 +282,7 @@ int index_put(index_t *idx, int key, long pos) {
     else{
 
         int m = bbin(idx->records, 0, idx->n_records-1, key);
-
+        // printf("--- %d\n", m);
         if(m < 0){
             m = -m-1;
             idx->n_records++;
